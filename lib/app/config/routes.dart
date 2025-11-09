@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:turex/features/home/presentation/pages/CartPage.dart';
+import 'package:turex/features/home/presentation/pages/DirectPaymentPage.dart';
 import 'package:turex/features/home/presentation/pages/TransactionsPage.dart';
 import '../../features/home/presentation/pages/client_home_page.dart';
 import '../../features/home/presentation/pages/business_home_page.dart';
@@ -57,7 +58,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/payment',
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: Placeholder(), // Para futuro
+            child: DirectPaymentPage(), // Para futuro
           ),
         ),
         GoRoute(
