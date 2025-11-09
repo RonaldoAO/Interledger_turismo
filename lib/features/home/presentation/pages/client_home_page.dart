@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import '../../../../app/config/theme.dart';
 
 class ClientHomePage extends StatefulWidget {
@@ -12,7 +13,14 @@ class ClientHomePage extends StatefulWidget {
 }
 
 class _ClientHomePageState extends State<ClientHomePage> {
-  final LatLng _center = LatLng(19.4326, -99.1332); // CDMX
+  final ll.LatLng _center = ll.LatLng(19.4326, -99.1332); // CDMX
+  final List<ll.LatLng> _points = [
+    ll.LatLng(19.4326, -99.1332),
+    ll.LatLng(19.4420, -99.1430),
+    ll.LatLng(19.4250, -99.1200),
+    ll.LatLng(19.4385, -99.1300),
+  ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,33 +29,45 @@ class _ClientHomePageState extends State<ClientHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Mapa
-          SizedBox(
-            height: 300,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: _center,
-                initialZoom: 13.0,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black12),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.app',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _center,
-                      width: 80,
-                      height: 80,
-                      child: const Icon(
-                        Icons.location_on,
-                        color: AppTheme.primaryBlue,
-                        size: 40,
-                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: 300,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: _center,
+                      initialZoom: 13.0,
                     ),
-                  ],
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                        subdomains: ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.example.turex',
+                      ),
+                      MarkerLayer(
+                        markers: _points
+                            .map(
+                              (p) => Marker(
+                                point: p,
+                                width: 28,
+                                height: 36,
+                                child: const _SharedLogoMarker(),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -216,4 +236,74 @@ class _CategoryGrid extends StatelessWidget {
       },
     );
   }
+}
+
+class _SharedLogoMarker extends StatelessWidget {
+  const _SharedLogoMarker();
+
+  @override
+  Widget build(BuildContext context) {
+    // Pin estilo maps con color #03413C, con imagen en la cabeza
+    return SizedBox(
+      width: 28,
+      height: 36,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const CustomPaint(
+            painter: _PinPainter(Color(0xFF03413C)),
+            size: Size(28, 36),
+          ),
+          // Imagen recortada en círculo, posicionada sobre la cabeza del pin
+          Align(
+            alignment: const Alignment(0, -0.35),
+            child: ClipOval(
+              child: Image.asset(
+                'web/icons/interledger.jpg',
+                width: 18,
+                height: 18,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PinPainter extends CustomPainter {
+  final Color color;
+  const _PinPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final w = size.width;
+    final h = size.height;
+    final r = w / 2; // radio de la cabeza
+    final cx = w / 2;
+    final cy = r + 2; // desplazar levemente hacia abajo
+
+    // Cabeza (círculo)
+    canvas.drawCircle(Offset(cx, cy), r, paint);
+
+    // Cola (triángulo hacia abajo)
+    final tail = ui.Path()
+      ..moveTo(cx, h)
+      ..lineTo(cx - r * 0.75, cy + r * 0.45)
+      ..lineTo(cx + r * 0.75, cy + r * 0.45)
+      ..close();
+    canvas.drawPath(tail, paint);
+
+    // Punto interno blanco para contraste
+    final inner = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(cx, cy), r * 0.45, inner);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PinPainter oldDelegate) => false;
 }
