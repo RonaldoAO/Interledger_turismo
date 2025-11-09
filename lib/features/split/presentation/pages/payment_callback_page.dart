@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/config/theme.dart';
 import '../../data/models/callback_result.dart';
 import '../providers/split_provider.dart';
+import 'package:lottie/lottie.dart';
 
 class PaymentCallbackPage extends ConsumerStatefulWidget {
   final String interactRef;
@@ -16,8 +17,7 @@ class PaymentCallbackPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PaymentCallbackPage> createState() =>
-      _PaymentCallbackPageState();
+  ConsumerState<PaymentCallbackPage> createState() => _PaymentCallbackPageState();
 }
 
 class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
@@ -39,31 +39,45 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
         widget.nonce,
       );
 
-      setState(() {
-        _result = result;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _result = result;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Resultado del Pago'),
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.go('/client'),
+          style: IconButton.styleFrom(
+            backgroundColor: AppTheme.lightGray,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
           child: _isLoading
               ? _buildLoading()
               : _error != null
@@ -78,17 +92,31 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const CircularProgressIndicator(
-          color: AppTheme.primaryBlue,
-          strokeWidth: 3,
+        SizedBox(
+          width: 200,
+          height: 200,
+          child: Lottie.asset(
+            'assets/animations/payment_processing.json', // Deberás agregar esta animación a tus assets
+            repeat: true,
+          ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         Text(
           'Procesando tu pago...',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Estamos verificando tu transacción, por favor espera un momento.',
+          style: TextStyle(
+            fontSize: 16,
             color: AppTheme.darkGray,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -99,19 +127,19 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 100,
-          height: 100,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: AppTheme.error.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
+          child: Icon(
             Icons.error_outline,
-            color: Colors.red,
-            size: 60,
+            color: AppTheme.error,
+            size: 64,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         const Text(
           'Error en el pago',
           style: TextStyle(
@@ -119,7 +147,7 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           _error!,
           textAlign: TextAlign.center,
@@ -132,12 +160,28 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
         SizedBox(
           width: double.infinity,
           height: 56,
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
             onPressed: () => context.go('/client'),
+            icon: const Icon(Icons.home),
+            label: const Text('Volver al inicio'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
             ),
-            child: const Text('Volver al Inicio'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextButton.icon(
+          onPressed: _processCallback,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Reintentar'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.darkGray,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
         ),
       ],
@@ -151,10 +195,11 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 100,
-          height: 100,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
             color: isSuccess
                 ? AppTheme.success.withOpacity(0.1)
@@ -162,24 +207,24 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
             shape: BoxShape.circle,
           ),
           child: Icon(
-            isSuccess ? Icons.check_circle_outline : Icons.schedule,
+            isSuccess ? Icons.check_circle_outline : Icons.pending_actions,
             color: isSuccess ? AppTheme.success : AppTheme.pending,
-            size: 60,
+            size: 64,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         Text(
           isSuccess ? '¡Pago Exitoso!' : 'Pago Pendiente',
           style: const TextStyle(
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           isSuccess
               ? 'Tu pago ha sido procesado correctamente'
-              : 'Tu pago está siendo procesado',
+              : 'Tu pago está siendo procesado, no te preocupes, ¡lo confirmaremos pronto!',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -189,34 +234,51 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
         const SizedBox(height: 32),
 
         // Detalles del pago
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                _DetailRow(
-                  label: 'Estado',
-                  value: result.status,
-                  valueColor: isSuccess ? AppTheme.success : AppTheme.pending,
-                ),
-                if (result.payer != null) ...[
-                  const Divider(height: 24),
-                  _DetailRow(
-                    label: 'Pagador',
-                    value: result.payer!,
-                  ),
-                ],
-                const Divider(height: 24),
-                _DetailRow(
-                  label: 'Pagos procesados',
-                  value: '${result.outgoingPayments.length}',
-                ),
-              ],
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.mediumGray,
+              width: 1,
             ),
           ),
+          child: Column(
+            children: [
+              _DetailRow(
+                label: 'Estado',
+                value: result.status,
+                valueColor: isSuccess ? AppTheme.success : AppTheme.pending,
+                valueIcon: isSuccess
+                    ? Icons.check_circle
+                    : Icons.schedule,
+              ),
+              if (result.payer != null) ...[
+                const Divider(height: 24),
+                _DetailRow(
+                  label: 'Pagador',
+                  value: result.payer!,
+                  valueIcon: Icons.person,
+                ),
+              ],
+              const Divider(height: 24),
+              _DetailRow(
+                label: 'Pagos procesados',
+                value: '${result.outgoingPayments.length}',
+                valueIcon: Icons.receipt_long,
+              ),
+              
+              // Podríamos agregar más detalles como fecha y hora, ID de transacción, etc.
+             
+            ],
+          ),
         ),
+        
         const SizedBox(height: 32),
 
+        // Botones de acción
         SizedBox(
           width: double.infinity,
           height: 56,
@@ -224,12 +286,25 @@ class _PaymentCallbackPageState extends ConsumerState<PaymentCallbackPage> {
             onPressed: () => context.go('/client'),
             icon: const Icon(Icons.home),
             label: const Text('Volver al Inicio'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        TextButton(
+        const SizedBox(height: 16),
+        TextButton.icon(
           onPressed: () => context.go('/history'),
-          child: const Text('Ver Historial'),
+          icon: const Icon(Icons.history),
+          label: const Text('Ver Historial'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.darkGray,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
         ),
       ],
     );
@@ -240,11 +315,13 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
+  final IconData? valueIcon;
 
   const _DetailRow({
     required this.label,
     required this.value,
     this.valueColor,
+    this.valueIcon,
   });
 
   @override
@@ -259,13 +336,25 @@ class _DetailRow extends StatelessWidget {
             color: AppTheme.darkGray,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? AppTheme.textDark,
-          ),
+        Row(
+          children: [
+            if (valueIcon != null) ...[
+              Icon(
+                valueIcon,
+                size: 16,
+                color: valueColor ?? AppTheme.darkGray,
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: valueColor ?? AppTheme.textDark,
+              ),
+            ),
+          ],
         ),
       ],
     );

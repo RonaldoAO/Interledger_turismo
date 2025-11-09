@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/config/theme.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -17,44 +18,95 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).uri.path;
+    final screenSize = MediaQuery.of(context).size;
+    final bool isTablet = screenSize.width > 768;
 
     return Scaffold(
+      backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
+        toolbarHeight: 70,
         title: Row(
           children: [
-            const Icon(Icons.account_balance_wallet, size: 28),
-            const SizedBox(width: 8),
-            Text(isClientMode ? 'Cliente' : 'Negocio'),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.lightBlue,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SvgPicture.asset(
+                'assets/icons/logo.svg',
+                width: 24,
+                height: 24,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'VibePayments',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+              ),
+            ),
+            if (isTablet) ...[
+              const SizedBox(width: 24),
+              _buildModeTag(),
+            ],
           ],
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                isClientMode = !isClientMode;
-              });
-              context.go(isClientMode ? '/client' : '/business');
-            },
-            icon: const Icon(Icons.swap_horiz),
-            label: Text(isClientMode ? 'Modo Negocio' : 'Modo Cliente'),
-          ),
+          if (!isTablet)
+            _buildModeTag(),
           const SizedBox(width: 8),
-        ],
-      ),
-      body: widget.child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppTheme.mediumGray, width: 1),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.lightGray,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                isClientMode ? Icons.store_outlined : Icons.person_outlined,
+                color: AppTheme.darkGray,
+              ),
+              onPressed: () {
+                setState(() {
+                  isClientMode = !isClientMode;
+                });
+                context.go(isClientMode ? '/client' : '/business');
+              },
+            ),
           ),
+        ],
+        elevation: 0,
+        backgroundColor: Colors.white,
+      ),
+      body: Container(
+        margin: EdgeInsets.symmetric(
+          horizontal: isTablet ? screenSize.width * 0.05 : 0,
+          vertical: 0,
         ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: isTablet
+              ? const BorderRadius.vertical(top: Radius.circular(24))
+              : null,
+        ),
+        child: widget.child,
+      ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         child: NavigationBar(
           selectedIndex: _getSelectedIndex(currentPath),
           onDestinationSelected: (index) {
             _onItemTapped(context, index);
           },
           backgroundColor: Colors.white,
-          indicatorColor: AppTheme.primaryBlue.withOpacity(0.1),
+          elevation: 15,
+          shadowColor: Colors.black26,
+          height: 70,
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: isClientMode
               ? _clientDestinations()
               : _businessDestinations(),
@@ -63,24 +115,53 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
+  Widget _buildModeTag() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isClientMode ? AppTheme.lightBlue : AppTheme.success.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isClientMode ? Icons.person : Icons.business,
+            size: 16,
+            color: isClientMode ? AppTheme.primaryBlue : AppTheme.success,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isClientMode ? 'Cliente' : 'Negocio',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isClientMode ? AppTheme.primaryBlue : AppTheme.success,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<NavigationDestination> _clientDestinations() {
-    return const [
-      NavigationDestination(
+    return [
+      const NavigationDestination(
         icon: Icon(Icons.home_outlined),
-        selectedIcon: Icon(Icons.home),
+        selectedIcon: Icon(Icons.home_rounded),
         label: 'Inicio',
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.explore_outlined),
         selectedIcon: Icon(Icons.explore),
         label: 'Descubre',
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.shopping_cart_outlined),
         selectedIcon: Icon(Icons.shopping_cart),
         label: 'Carrito',
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.history_outlined),
         selectedIcon: Icon(Icons.history),
         label: 'Historial',
@@ -89,25 +170,25 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   List<NavigationDestination> _businessDestinations() {
-    return const [
-      NavigationDestination(
-        icon: Icon(Icons.home_outlined),
-        selectedIcon: Icon(Icons.home),
-        label: 'Inicio',
+    return [
+      const NavigationDestination(
+        icon: Icon(Icons.dashboard_outlined),
+        selectedIcon: Icon(Icons.dashboard),
+        label: 'Dashboard',
       ),
-      NavigationDestination(
-        icon: Icon(Icons.people_outline),
-        selectedIcon: Icon(Icons.people),
-        label: 'Pago',
+      const NavigationDestination(
+        icon: Icon(Icons.payments_outlined),
+        selectedIcon: Icon(Icons.payments),
+        label: 'Pagos',
       ),
-      NavigationDestination(
+      const NavigationDestination(
         icon: Icon(Icons.receipt_long_outlined),
         selectedIcon: Icon(Icons.receipt_long),
         label: 'Historial',
       ),
-      NavigationDestination(
-        icon: Icon(Icons.settings_outlined),
-        selectedIcon: Icon(Icons.settings),
+      const NavigationDestination(
+        icon: Icon(Icons.currency_exchange),
+        selectedIcon: Icon(Icons.currency_exchange_outlined),
         label: 'Conversor',
       ),
     ];
