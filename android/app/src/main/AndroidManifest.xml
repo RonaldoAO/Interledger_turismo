@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+    </intent>
+</queries>
     <application
         android:label="turex"
         android:name="${applicationName}"
@@ -30,6 +36,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="AIzaSyD_cJTX8GowpJJQVVQAPSq7OcOLZ0QfdSg"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
